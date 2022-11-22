@@ -7,10 +7,11 @@ import {
 } from "./IVideoSlice";
 
 const initialState: Partial<IinitialState> = {
-  videoType: "video/mp4",
-  videoPath: "",
   playing: false,
   itemsLength: 0,
+  isRandom: false,
+  isRepeating: false,
+  isFullScreen: false,
   videosList: [],
 
   isError: {
@@ -22,12 +23,6 @@ export const VideoSlice = createSlice({
   name: "video-player",
   initialState,
   reducers: {
-    setVideo: (state, actions: PayloadAction<setVideoType>) => {
-      state.videoPath = actions?.payload?.videoPath;
-      state.videoType = actions?.payload?.videoType;
-      state.playing = actions?.payload?.playing;
-      state.videoDetails = actions?.payload?.videoDetails;
-    },
     ADD_VIDEO_DATA: (state, action: PayloadAction<IAddVideoDataPayload>) => {
       state.videosList = action.payload.videosList;
       state.folderName = action.payload.folderName;
@@ -65,7 +60,22 @@ export const VideoSlice = createSlice({
       //set video to play / pause
       state.playing = action.payload.playState;
     },
+    REPEAT_MODE: (state) => {
+      state.isRepeating = !state.isRepeating;
+    },
+    RANDOM_MODE: (state) => {
+      state.isRandom = !state.isRandom;
+    },
+    FULLSCREEN_MODE: (state) => {
+      state.isFullScreen = !state.isFullScreen;
+    },
   },
 });
-export const { setVideo, ADD_VIDEO_DATA, ADD_VIDEO, PLAY_VIDEO } =
-  VideoSlice.actions;
+export const {
+  ADD_VIDEO_DATA,
+  ADD_VIDEO,
+  PLAY_VIDEO,
+  REPEAT_MODE,
+  FULLSCREEN_MODE,
+  RANDOM_MODE,
+} = VideoSlice.actions;

@@ -19,22 +19,28 @@ import React, {
 } from "react";
 import Seekbar from "./Seekbar";
 import { IVideosFileList } from "../Types/AppTypes";
-import { useAppDispatch } from "../Redux/ReduxHooks";
-import { PLAY_VIDEO } from "../Redux/Slices/VideoSlice";
+import { useAppDispatch, useAppSelector } from "../Redux/ReduxHooks";
+import {
+  FULLSCREEN_MODE,
+  PLAY_VIDEO,
+  RANDOM_MODE,
+  REPEAT_MODE,
+} from "../Redux/Slices/VideoSlice";
 
 type PlayerBarProps = {
   CURRENT_VIDEO: IVideosFileList;
   SHOW: boolean;
   VIDEO_PLAYER_REF: React.MutableRefObject<HTMLVideoElement>;
-  setFullscreen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 const PlayerBar = ({
   SHOW,
   CURRENT_VIDEO,
   VIDEO_PLAYER_REF,
-  setFullscreen,
 }: PlayerBarProps) => {
   const dispatch = useAppDispatch();
+  const { isFullScreen, isRandom, isRepeating } = useAppSelector(
+    (state) => state["video-player"]
+  );
   const [isPlaying, setisPlaying] = useState<boolean>(false);
   const [isVideoEnded, setisVideoEnded] = useState<boolean>(false);
 
@@ -86,14 +92,34 @@ const PlayerBar = ({
     }
   };
 
-  const handleSHOWVolume = (ev: React.MouseEvent) => {
+  const handleShowVolume = (ev: React.MouseEvent, action: "show" | "hide") => {
     const button = ev.target as HTMLButtonElement;
-    const volumeRange = button.lastElementChild;
-    if (volumeRange?.classList.contains("hide-volume")) {
+    const volumeRange = button?.closest(".volume-range");
+    console.log(volumeRange);
+    if (volumeRange !== null && action === "show") {
       volumeRange.classList.remove("hide-volume");
-    } else {
-      volumeRange?.classList.add("hide-volume");
     }
+    if (volumeRange !== null && action === "hide") {
+      volumeRange.classList.add("hide-volume");
+    }
+  };
+  const handleMuteVolume = (
+    ev: React.MouseEvent,
+    VIDEO_REF: MutableRefObject<HTMLVideoElement>
+  ) => {
+    const button = ev.target as HTMLButtonElement;
+    const btnChildren = Array.from(button.children);
+    const isMutedVol: boolean = btnChildren[0].classList.contains("hidden")
+      ? true
+      : false;
+    VIDEO_REF.current.muted = isMutedVol;
+    if (isMutedVol) {
+      button.classList.add("btn-active");
+    } else {
+      button.classList.remove("btn-active");
+    }
+    //
+    btnChildren.forEach((btn) => btn.classList.toggle("hidden"));
   };
   const handleVolumeChange = (
     ev: React.ChangeEvent,
@@ -127,19 +153,38 @@ const PlayerBar = ({
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
   ) => {
-    setFullscreen((prev) => {
-      addBtnActiveStyls(ev, prev);
-      return !prev;
-    });
+    const btn = ev.target as HTMLButtonElement;
+    const icons = btn.children as HTMLCollection;
+    Array.from(icons).forEach((ico) => ico.classList.toggle("hidden"));
+    const isFullScreen = icons[0].classList.contains("hidden") ? false : true;
+    if (isFullScreen) {
+      btn.classList.add("btn-active");
+    } else {
+      btn.classList.remove("btn-active");
+    }
+    dispatch(FULLSCREEN_MODE());
   };
   const handleRepeatMode = (
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
-  ) => {};
+  ) => {
+    const btn = ev.target as HTMLButtonElement;
+    const icons = btn.children as HTMLCollection;
+    Array.from(icons).forEach((ico) => ico.classList.toggle("hidden"));
+    const isRepeatMode = icons[0].classList.contains("hidden") ? false : true;
+    if (isRepeatMode) {
+      btn.classList.add("btn-active");
+    } else {
+      btn.classList.remove("btn-active");
+    }
+    dispatch(REPEAT_MODE());
+  };
   const handleRandom = (
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
-  ) => {};
+  ) => {
+    dispatch(RANDOM_MODE());
+  };
   const handleForward = (
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
@@ -203,6 +248,21 @@ const PlayerBar = ({
     }
   }, [isVideoEnded]);
 
+  useLayoutEffect(() => {
+    if (isFullScreen) {
+      VIDEO_PLAYER_REF.current?.parentElement?.classList.add("full-screen");
+    } else {
+      VIDEO_PLAYER_REF.current?.parentElement?.classList.remove("full-screen");
+    }
+  }, [isFullScreen]);
+
+  useLayoutEffect(() => {
+    if (isRepeating) {
+      VIDEO_PLAYER_REF.current.loop = true;
+    } else {
+      VIDEO_PLAYER_REF.current.loop = false;
+    }
+  }, [isRepeating]);
   console.count("render bar");
 
   return (
@@ -215,12 +275,17 @@ const PlayerBar = ({
       <div className="flex items-center justify-between w-full h-4/5 bg-indigo-900 px-2">
         <span className="controls-box">
           <button
+            title="backword"
             type="button"
             className="flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 hover:bg-zinc-600 rounded-full w-10 h-10"
+            onClick={(ev: React.MouseEvent) =>
+              handleBackward(ev, VIDEO_PLAYER_REF)
+            }
           >
             <RiSkipBackMiniFill />
           </button>
           <button
+            title="play / pause"
             ref={PLAY_BTN_REF}
             type="button"
             className="flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 hover:bg-zinc-600 rounded-full w-10 h-10"
@@ -238,8 +303,12 @@ const PlayerBar = ({
             )}
           </button>
           <button
+            title="forward"
             type="button"
             className="flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 hover:bg-zinc-600 rounded-full w-10 h-10"
+            onClick={(ev: React.MouseEvent) =>
+              handleForward(ev, VIDEO_PLAYER_REF)
+            }
           >
             <RiSkipForwardMiniFill />
           </button>
@@ -257,22 +326,20 @@ const PlayerBar = ({
               {CURRENT_VIDEO?.name}
             </figcaption>
 
-            {/* <p>{VIDEO_DETAILS?.duration}</p> */}
+            <p>
+              {!isNaN(VIDEO_PLAYER_REF.current?.duration) &&
+                VIDEO_PLAYER_REF.current?.src?.length >= 1 &&
+                (+VIDEO_PLAYER_REF.current?.duration / 60).toFixed(2)}
+            </p>
           </span>
         </span>
-        <span className="flex items-center justify-end gap-2 w-1/4">
-          <button
-            type="button"
-            className="volume-btn"
-            onClick={(ev: React.MouseEvent) => handleSHOWVolume(ev)}
+        <div className="flex items-center justify-end gap-2 w-1/4 ">
+          <span
+            className="flex items-center justify-center gap-2 "
+            onMouseOver={(ev: React.MouseEvent) => handleShowVolume(ev, "show")}
+            onMouseOut={(ev: React.MouseEvent) => handleShowVolume(ev, "hide")}
           >
-            <span className="pointer-events-none select-none hidden">
-              <IoVolumeMute className="text-xl" />
-            </span>
-            <span className="pointer-events-none select-none">
-              <IoVolumeHigh className="text-xl" />
-            </span>
-            <span className="volume-range hide-volume pointer-events-none select-none">
+            <span className="volume-range pointer-events-none select-none hide-volume">
               <input
                 className="accent-yellow-400 pointer-events-auto"
                 type="range"
@@ -286,39 +353,67 @@ const PlayerBar = ({
                 }
               />
             </span>
-          </button>
+            <button
+              type="button"
+              className="volume-btn"
+              onClick={(ev: React.MouseEvent) =>
+                handleMuteVolume(ev, VIDEO_PLAYER_REF)
+              }
+            >
+              <span
+                className="pointer-events-none select-none hidden"
+                title="mute"
+              >
+                <IoVolumeMute className="text-xl" />
+              </span>
+              <span className="pointer-events-none select-none">
+                <IoVolumeHigh className="text-xl" title="volume high" />
+              </span>
+            </button>
+          </span>
           <button
             type="button"
             className="flex justify-center items-center cursor-pointer h-9 w-9 bg-opacity-80 rounded-full hover:brightness-75 hover:bg-gray-600 hover:border border-slate-500"
+            onClick={(ev: React.MouseEvent) =>
+              handleRandom(ev, VIDEO_PLAYER_REF)
+            }
           >
             <span>
-              <FaRandom className="text-xl" />
+              <FaRandom className="text-xl" title="random" />
             </span>
           </button>
           <button
+            title="repeat on / off"
             type="button"
             className="flex justify-center items-center cursor-pointer h-9 w-9 bg-opacity-80 rounded-full hover:brightness-75 hover:bg-gray-600 hover:border border-slate-500"
+            onClick={(ev: React.MouseEvent) =>
+              handleRepeatMode(ev, VIDEO_PLAYER_REF)
+            }
           >
-            <span className="hidden">
-              <IoRepeatSharp className="text-xl" />
+            <span className="pointer-events-none select-none hidden">
+              <IoRepeatSharp className="text-xl" title="repeat on" />
             </span>
-            <span>
-              <TbRepeatOff className="text-xl" />
+            <span className="pointer-events-none select-none">
+              <TbRepeatOff className="text-xl" title="repeat off" />
             </span>
           </button>
           <button
+            title="fullscreen on / off"
             type="button"
             className="flex justify-center items-center cursor-pointer h-9 w-9 bg-opacity-80 rounded-full hover:brightness-75 hover:bg-gray-600 hover:border border-slate-500"
             onClick={(ev) => handlesFullscreen(ev, VIDEO_PLAYER_REF)}
           >
-            <span className="hidden pointer-events-none select-none">
+            <span
+              className="hidden pointer-events-none select-none"
+              title="fullscreen off"
+            >
               <MdPictureInPictureAlt className="text-xl" />
             </span>
             <span className="pointer-events-none select-none">
-              <SlScreenDesktop className="text-xl" />
+              <SlScreenDesktop className="text-xl" title="fullscreen on" />
             </span>
           </button>
-        </span>
+        </div>
       </div>
     </div>
   );

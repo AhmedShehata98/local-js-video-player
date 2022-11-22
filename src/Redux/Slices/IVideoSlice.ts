@@ -11,9 +11,10 @@ export interface IinitialState {
   currentVideo: IVideosFileList;
   folderName: string;
   itemsLength: number;
-  videoPath: string;
-  videoType: string;
   playing: boolean;
+  isRandom: boolean;
+  isRepeating: boolean;
+  isFullScreen: boolean;
 
   isError: {
     state: false;

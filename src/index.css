@@ -21,10 +21,10 @@
     @apply relative flex justify-center items-center cursor-pointer h-9 w-9 bg-opacity-80 rounded-full hover:brightness-75 hover:bg-gray-600 hover:border border-slate-500;
   }
   .volume-range {
-    @apply flex items-center justify-center rounded-md absolute bottom-24 transition-all duration-300 bg-zinc-600 -rotate-90 py-1 px-2;
+    @apply flex items-center justify-center rounded transition-all duration-300 rotate-180 py-1 px-2;
   }
   .hide-volume {
-    @apply translate-y-4 scale-90 opacity-0 pointer-events-none select-none;
+    @apply translate-x-4 opacity-0 pointer-events-none select-none;
   }
   .controls-box {
     @apply flex items-center justify-center gap-6 w-1/4 h-3/4 text-2xl text-yellow-300;

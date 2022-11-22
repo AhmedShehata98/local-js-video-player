@@ -1,30 +1,16 @@
 import React, { forwardRef, useEffect, useLayoutEffect, useRef } from "react";
+import { useAppSelector } from "../Redux/ReduxHooks";
 import { IVideosFileList } from "../Types/AppTypes";
 
 type playerProps = {
   CURRENT_VIDEO: IVideosFileList;
   show: boolean;
-  fullscreen: boolean;
 };
 
 const Player = forwardRef<HTMLVideoElement, playerProps>(
-  ({ show, CURRENT_VIDEO, fullscreen }, ref) => {
+  ({ show, CURRENT_VIDEO }, ref) => {
+    const { isRepeating } = useAppSelector((state) => state["video-player"]);
     const playerRef = useRef<HTMLDivElement>(null);
-
-    const handleAddFullscreenClass = (): boolean => {
-      if (playerRef.current?.classList.contains("full-screen")) {
-        playerRef.current.classList.remove("full-screen");
-      } else {
-        playerRef.current?.classList.add("full-screen");
-      }
-
-      return playerRef.current?.classList.contains("full-screen")
-        ? true
-        : false;
-    };
-    useEffect(() => {
-      handleAddFullscreenClass();
-    }, [fullscreen]);
 
     useLayoutEffect(() => {
       if (show) {
@@ -51,6 +37,7 @@ const Player = forwardRef<HTMLVideoElement, playerProps>(
           src={CURRENT_VIDEO?.video}
           typeof={CURRENT_VIDEO?.type}
           autoPlay
+          loop={isRepeating}
           ref={ref}
           preload="metadata"
         ></video>

@@ -7,11 +7,10 @@ import { useAppSelector } from "../../Redux/ReduxHooks";
 
 export const Root = () => {
   const {
-    "video-player": { currentVideo, videoType, playing, videoDetails },
+    "video-player": { currentVideo, playing },
   } = useAppSelector((s) => s);
   const volumeRef = useRef<number>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [fullscreen, setFullscreen] = useState(false);
 
   console.log(currentVideo);
   return (
@@ -22,13 +21,11 @@ export const Root = () => {
       <Player
         CURRENT_VIDEO={currentVideo!}
         show={playing as boolean}
-        fullscreen={fullscreen}
         ref={videoRef}
       />
       <PlayerBar
         CURRENT_VIDEO={currentVideo!}
         SHOW={playing as boolean}
-        setFullscreen={setFullscreen}
         VIDEO_PLAYER_REF={videoRef as MutableRefObject<HTMLVideoElement>}
       />
     </main>
