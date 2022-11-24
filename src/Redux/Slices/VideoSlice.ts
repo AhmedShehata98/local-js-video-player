@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, current, PayloadAction } from "@reduxjs/toolkit";
 import { IVideosFileList } from "../../Types/AppTypes";
 import {
   IAddVideoDataPayload,
@@ -12,6 +12,8 @@ const initialState: Partial<IinitialState> = {
   isRandom: false,
   isRepeating: false,
   isFullScreen: false,
+  isLastElement: false,
+  isFirstElement: false,
   videosList: [],
 
   isError: {
@@ -35,21 +37,7 @@ export const VideoSlice = createSlice({
         playState: boolean;
       }>
     ) => {
-      let targetID = action.payload?.video?.id;
-      // // change isPlay property in video object
-      // const newVideo: IVideosFileList = {
-      //   ...action.payload?.video,
-      //   isPlay: action.payload.playState,
-      // };
-      // // delete old video object from VideosList
-      // const withoutTarget: Partial<IVideosFileList>[] = state.videosList
-      //   ?.filter((vid) => vid.id !== targetID)
-      //   .map((vid) => ({ ...vid, isPlay: false }))!;
-      // // marge {newVideo object} with [ withoutTarget] ..
-      // const newVideosList = [
-      //   newVideo,
-      //   ...withoutTarget,
-      // ] as typeof state.videosList;
+      const targetID = action.payload?.video?.id;
       const newVideo = { ...action.payload?.video, isPlay: true };
       const newVideosList = state.videosList?.map((vid) =>
         vid.id === targetID
@@ -61,6 +49,53 @@ export const VideoSlice = createSlice({
 
       //set current video data
       state.currentVideo = newVideo;
+    },
+    FORWARD_MEDIA: (state) => {
+      // get index of current video
+      const currIndex = state.videosList?.findIndex(
+        (vid) => vid.id === state.currentVideo?.id
+      ) as number | -1;
+      const lastElement = state.videosList?.length! - 1;
+      let nextElement = currIndex;
+
+      if (currIndex !== lastElement) {
+        nextElement++;
+        state.currentVideo = state.videosList?.[nextElement];
+        const id = state.videosList?.[nextElement].id;
+        const newVideosList = state.videosList?.map((vid) =>
+          vid.id === id ? { ...vid, isPlay: true } : { ...vid, isPlay: false }
+        );
+        state.videosList = newVideosList;
+      }
+      if (nextElement >= lastElement) {
+        state.isLastElement = true;
+      } else {
+        state.isFirstElement = false;
+      }
+      state.playing = true;
+    },
+    BACKWORd_MEDIA: (state) => {
+      // get index of current video
+      const currIndex = state.videosList?.findIndex(
+        (vid) => vid.id === state.currentVideo?.id
+      ) as number | -1;
+      const firstElement = 0;
+      let precedesElement = currIndex;
+      if (currIndex !== firstElement) {
+        precedesElement--;
+        state.currentVideo = state.videosList?.[precedesElement];
+        const id = state.videosList?.[precedesElement].id;
+        const newVideosLIst = state.videosList?.map((vid) =>
+          vid.id === id ? { ...vid, isPlay: true } : { ...vid, isPlay: false }
+        );
+        state.videosList = newVideosLIst;
+      }
+      if (precedesElement <= 0) {
+        state.isFirstElement = true;
+      } else {
+        state.isLastElement = false;
+      }
+      state.playing = true;
     },
     PLAY_VIDEO: (state, action: PayloadAction<{ playState: boolean }>) => {
       //set video to play / pause
@@ -84,4 +119,6 @@ export const {
   REPEAT_MODE,
   FULLSCREEN_MODE,
   RANDOM_MODE,
+  FORWARD_MEDIA,
+  BACKWORd_MEDIA,
 } = VideoSlice.actions;

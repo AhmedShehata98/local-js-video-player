@@ -27,13 +27,19 @@
     @apply translate-x-4 opacity-0 pointer-events-none select-none;
   }
   .controls-box {
-    @apply flex items-center justify-center gap-6 w-1/4 h-3/4 text-2xl text-yellow-300;
+    @apply flex items-center justify-center gap-6 w-1/4 h-3/4 text-2xl;
   }
   .disabled-player-btn {
     @apply text-zinc-400 !cursor-not-allowed pointer-events-none;
   }
+  .media-btn {
+    @apply flex justify-center items-center cursor-pointer border transition-colors text-lime-500 border-slate-600 hover:bg-zinc-600 hover:bg-opacity-40 rounded-full w-10 h-10;
+  }
   .btn-active {
     @apply brightness-75 bg-gray-600 border border-slate-500;
+  }
+  .media-btn-disable {
+    @apply flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 text-zinc-600 rounded-full w-10 h-10 pointer-events-none;
   }
   .full-screen {
     @apply !h-[90vh] !w-full !top-0 !left-0;

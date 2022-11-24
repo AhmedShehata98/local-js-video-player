@@ -14,6 +14,8 @@ export interface IinitialState {
   playing: boolean;
   isRandom: boolean;
   isRepeating: boolean;
+  isLastElement: boolean;
+  isFirstElement: boolean;
   isFullScreen: boolean;
 
   isError: {

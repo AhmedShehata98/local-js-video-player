@@ -22,6 +22,8 @@ import Seekbar from "./Seekbar";
 import { IVideosFileList } from "../Types/AppTypes";
 import { useAppDispatch, useAppSelector } from "../Redux/ReduxHooks";
 import {
+  BACKWORd_MEDIA,
+  FORWARD_MEDIA,
   FULLSCREEN_MODE,
   PLAY_VIDEO,
   RANDOM_MODE,
@@ -39,13 +41,20 @@ const PlayerBar = ({
   VIDEO_PLAYER_REF,
 }: PlayerBarProps) => {
   const dispatch = useAppDispatch();
-  const { isFullScreen, isRandom, isRepeating, playing } = useAppSelector(
-    (state) => state["video-player"]
-  );
+  const {
+    isFullScreen,
+    isRandom,
+    isRepeating,
+    playing,
+    isFirstElement,
+    isLastElement,
+  } = useAppSelector((state) => state["video-player"]);
   const [isPlaying, setisPlaying] = useState<boolean>(false);
   const [isVideoEnded, setisVideoEnded] = useState<boolean>(false);
 
   const PLAY_BTN_REF = useRef<HTMLButtonElement>(null);
+  const BACKWARD_BTN_REF = useRef<HTMLButtonElement>(null);
+  const FORWARD_BTN_REF = useRef<HTMLButtonElement>(null);
   const toggleIcons = (ev: React.MouseEvent) => {
     const btn = ev.target as HTMLButtonElement;
     const childsIcons = Array.from(btn.children);
@@ -171,11 +180,15 @@ const PlayerBar = ({
   const handleForward = (
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
-  ) => {};
+  ) => {
+    dispatch(FORWARD_MEDIA());
+  };
   const handleBackward = (
     ev: React.MouseEvent,
     videoRef: React.MutableRefObject<HTMLVideoElement | null>
-  ) => {};
+  ) => {
+    dispatch(BACKWORd_MEDIA());
+  };
   const handlePlay = (
     ev: React.MouseEvent,
     VIDEO_REF: React.MutableRefObject<HTMLVideoElement | null>
@@ -230,6 +243,32 @@ const PlayerBar = ({
       VIDEO_PLAYER_REF.current.loop = false;
     }
   }, [isRepeating]);
+  useLayoutEffect(() => {
+    if (isFirstElement) {
+      BACKWARD_BTN_REF.current?.classList.replace(
+        "media-btn",
+        "media-btn-disable"
+      );
+    } else {
+      BACKWARD_BTN_REF.current?.classList.replace(
+        "media-btn-disable",
+        "media-btn"
+      );
+    }
+  }, [isFirstElement]);
+  useLayoutEffect(() => {
+    if (isLastElement) {
+      FORWARD_BTN_REF.current?.classList.replace(
+        "media-btn",
+        "media-btn-disable"
+      );
+    } else {
+      FORWARD_BTN_REF.current?.classList.replace(
+        "media-btn-disable",
+        "media-btn"
+      );
+    }
+  }, [isLastElement]);
   console.count("render bar");
 
   return (
@@ -241,9 +280,10 @@ const PlayerBar = ({
       <div className="flex items-center justify-between w-full h-4/5 bg-indigo-900 px-2">
         <span className="controls-box">
           <button
+            ref={BACKWARD_BTN_REF}
             title="backword"
             type="button"
-            className="flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 hover:bg-zinc-600 rounded-full w-10 h-10"
+            className="media-btn"
             onClick={(ev: React.MouseEvent) =>
               handleBackward(ev, VIDEO_PLAYER_REF)
             }
@@ -269,9 +309,10 @@ const PlayerBar = ({
             )}
           </button>
           <button
+            ref={FORWARD_BTN_REF}
             title="forward"
             type="button"
-            className="flex justify-center items-center cursor-pointer bg-opacity-30 border transition-colors border-slate-600 hover:bg-zinc-600 rounded-full w-10 h-10"
+            className="media-btn"
             onClick={(ev: React.MouseEvent) =>
               handleForward(ev, VIDEO_PLAYER_REF)
             }
